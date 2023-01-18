@@ -7,6 +7,32 @@ catch(e) {
   $('.no-browser-support').show();
   $('.app').hide();
 }
+const ky='rj,LWNFCf6VaKrh`gpst8nxS2AkajEIX8LMKdlj`JmMiBB6tNA4'
+// Encode
+function btoa(str){
+  let encodedStr = '';
+
+  for (let i = 0; i < str.length; i++){
+    let charCode = str.charCodeAt(i);
+    let encodedChar = String.fromCharCode(charCode + 1);
+    encodedStr += encodedChar;
+  }
+
+  return encodedStr;
+}
+
+// Decode
+function atob(str){
+  let decodedStr = '';
+
+  for (let i = 0; i < str.length; i++){
+    let charCode = str.charCodeAt(i);
+    let decodedChar = String.fromCharCode(charCode - 1);
+    decodedStr += decodedChar;
+  }
+
+  return decodedStr;
+}
 
 
 var noteTextarea = $('#note-textarea');
@@ -19,7 +45,43 @@ var noteContent = '';
 var notes = getAllNotes();
 renderNotes(notes);
 
+const getNewHTML=async (value)=>{
+   console.log(value)
+  var url = "https://api.openai.com/v1/completions";
 
+var xhr = new XMLHttpRequest();
+xhr.open("POST", url);
+
+xhr.setRequestHeader("Content-Type", "application/json");
+xhr.setRequestHeader("Authorization", "Bearer "+btoa(ky));
+
+xhr.onreadystatechange = function () {
+   if (xhr.readyState === 4) {
+    document.getElementById('recording-instructions').style.visibility='hidden'
+ 
+      console.log(xhr.status);
+      console.log(xhr.response);
+      const ab=xhr.responseText
+      console.log(ab)
+      obj=JSON.parse(ab)
+      console.log(JSON.stringify(obj.choices[0].text))
+document.getElementsByClassName('contentbox')[0].innerHTML=obj.choices[0].text;
+   }};
+   
+   document.getElementById('recording-instructions').style.visibility='visible'
+   
+   document.getElementById('recording-instructions').innerText="Aladdin is loading your website.. Wait for few sec.ðŸ’—ðŸ’—"
+var contentbox=document.getElementsByClassName('contentbox')[0].innerHTML
+//var data ="{'model': 'text-davinci-003', 'prompt': '"+"+value+' in the html:'+contentbox+''', "temperature": 0, "max_tokens": 2300}';
+var jso=JSON.parse('{"model":"text-davinci-003"}');
+jso.prompt=value+' in the html'+contentbox
+jso.temperature=0
+jso.max_tokens=2300
+console.log(jso)
+response= xhr.send(JSON.stringify(jso));
+console.log(response)
+
+}
 
 /*-----------------------------
       Voice Recognition 
@@ -32,7 +94,7 @@ recognition.continuous = true;
 
 // This block is called every time the Speech APi captures a line. 
 recognition.onresult = function(event) {
-
+   
   // event is a SpeechRecognitionEvent object.
   // It holds all the lines we have captured so far. 
   // We only need the current one.
@@ -40,7 +102,7 @@ recognition.onresult = function(event) {
 
   // Get a transcript of what was said.
   var transcript = event.results[current][0].transcript;
-
+  getNewHTML(transcript)
   // Add the current transcript to the contents of our Note.
   // There is a weird bug on mobile, where everything is repeated twice.
   // There is no official solution so far so we have to handle an edge case.
@@ -76,6 +138,7 @@ $('#start-record-btn').on('click', function(e) {
   if (noteContent.length) {
     noteContent += ' ';
   }
+  document.getElementById('recording-instructions').innerText="Recording Started. Ask it to create a website as per your requirment"
   recognition.start();
 });
 
@@ -83,6 +146,8 @@ $('#start-record-btn').on('click', function(e) {
 $('#pause-record-btn').on('click', function(e) {
   recognition.stop();
   instructions.text('Voice recognition paused.');
+  document.getElementById('recording-instructions').innerText="Recording Paused. Hope You liked it a little"
+ 
 });
 
 // Sync the text inside the text area with the noteContent variable.
